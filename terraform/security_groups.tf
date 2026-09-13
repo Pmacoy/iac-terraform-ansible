@@ -11,6 +11,10 @@ resource "aws_security_group" "fleet" {
     cidr_blocks = [var.ssh_ingress_cidr]
   }
 
+  # checkov:skip=CKV_AWS_260: intentionally open -- this rule fronts the
+  # fleet's own nginx (ansible/roles/webserver), which is meant to be
+  # reachable from the public internet. Scoping this down would defeat
+  # the point of having a public web tier.
   ingress {
     description = "HTTP from anywhere (this is a public web tier)"
     from_port   = 80

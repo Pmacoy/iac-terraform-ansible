@@ -27,3 +27,8 @@ output "fleet_role_arn" {
 output "fleet_instance_profile" {
   value = aws_iam_instance_profile.fleet.name
 }
+
+output "flow_logs_bucket" {
+  description = "Name of the S3 bucket VPC flow logs are delivered to"
+  value       = aws_s3_bucket.flow_logs.bucket
+}

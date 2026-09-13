@@ -5,6 +5,17 @@
 # bucket, and skipping any of them would be a real finding, not a
 # stylistic one.
 resource "aws_s3_bucket" "artifacts" {
+  # checkov:skip=CKV2_AWS_62: no event-driven pipeline (Lambda/SQS/SNS)
+  # exists in this demo to notify -- nothing would ever consume these
+  # events.
+  # checkov:skip=CKV_AWS_144: cross-region replication is a DR concern for
+  # production data; this bucket only holds this demo's throwaway
+  # LocalStack artifacts, and every CI run empties it via `terraform
+  # destroy` anyway.
+  # checkov:skip=CKV_AWS_145: the default AES256 encryption enabled below
+  # is sufficient here; a customer-managed KMS key would add a key to
+  # provision and manage for no real benefit, and this repo's LocalStack
+  # container (docker-compose.yml) doesn't enable the KMS service.
   bucket = "${local.name}-artifacts"
   tags   = local.common_tags
 }

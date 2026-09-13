@@ -1,8 +1,15 @@
 ---
 - name: Update apt package cache
+  # No cache_valid_time here on purpose: Ansible's apt module judges
+  # freshness from /var/cache/apt/pkgcache.bin's mtime, which the image
+  # build leaves looking recent -- but the same Dockerfile RUN also does
+  # `rm -rf /var/lib/apt/lists/*` to keep the image small, so there's no
+  # actual package index left on a freshly-built container. A
+  # cache_valid_time window would make Ansible trust that stale mtime and
+  # skip apt-get update, and every apt-get install below would then fail
+  # with "No package matching '<pkg>' is available".
   ansible.builtin.apt:
     update_cache: true
-    cache_valid_time: 3600
 
 - name: Install baseline packages
   ansible.builtin.apt:
