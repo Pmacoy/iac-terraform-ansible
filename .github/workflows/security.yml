@@ -55,8 +55,12 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           pip install --quiet ansible-core==2.17.6 ansible-lint==24.12.2
-      - name: ansible-lint --profile security
-        run: ansible-lint --profile security ansible/playbooks/site.yml
+      # ansible-lint's profiles escalate min -> basic -> moderate -> safety
+      # -> shared -> production; there's no profile literally named
+      # "security" -- "safety" is the one that adds the security-relevant
+      # rules (e.g. flagging risky use of no_log, latest/unpinned images).
+      - name: ansible-lint --profile safety
+        run: ansible-lint --profile safety ansible/playbooks/site.yml
 
   filesystem:
     name: Trivy filesystem scan
