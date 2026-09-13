@@ -8,6 +8,12 @@
 # so the demo proves configuration management, not a lucky base image.
 FROM ubuntu:24.04
 
+# hadolint ignore=DL3008
+# Not pinning apt package versions here on purpose: this base image is
+# itself repinned by Dependabot (docker ecosystem, docker/corporate-server)
+# whenever Ubuntu 24.04 moves, and hard-coding e.g. openssh-server's exact
+# version would silently start failing every time Ubuntu ships a security
+# update for it -- the opposite of what a security-conscious pin should do.
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       openssh-server \
