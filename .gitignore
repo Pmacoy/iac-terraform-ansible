@@ -1,0 +1,20 @@
+# Generated locally by scripts/generate-ssh-key.sh -- never commit a
+# private key or the BOOTSTRAP_SSH_PUBKEY env file.
+.ssh/
+.env
+
+# Terraform local state and working files (LocalStack state is throwaway
+# by design -- every CI run applies and destroys fresh).
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/tfplan
+terraform/crash.log
+terraform/override.tf
+terraform/override.tf.json
+
+# Ansible
+*.retry
+
+__pycache__/
+*.pyc

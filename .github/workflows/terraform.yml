@@ -1,0 +1,120 @@
+name: Terraform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: "1.9.8"
+
+jobs:
+  terraform:
+    name: fmt, validate, tflint, checkov, plan, apply, destroy (LocalStack)
+    runs-on: ubuntu-latest
+
+    # A real, running AWS-API-compatible mock -- not a stub or a
+    # dry-run flag. terraform apply below talks to this over HTTP exactly
+    # like it would talk to real AWS, just at localhost:4566 instead of
+    # amazonaws.com (see terraform/provider.tf's endpoints block).
+    services:
+      localstack:
+        image: localstack/localstack:3.8
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3,iam,sts,ec2
+        options: >-
+          --health-cmd "curl -sf http://localhost:4566/_localstack/health"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform fmt (check only)
+        working-directory: terraform
+        run: terraform fmt -check -recursive -diff
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        working-directory: terraform
+        run: terraform validate
+
+      - name: Set up tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: tflint
+        working-directory: terraform
+        run: |
+          tflint --init
+          tflint --recursive
+
+      - name: Checkov (Terraform static analysis)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          quiet: true
+          soft_fail: false
+
+      - name: Terraform plan
+        working-directory: terraform
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply (real, against LocalStack)
+        working-directory: terraform
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Show provisioned outputs
+        working-directory: terraform
+        run: terraform output
+
+      - name: Confirm the resources actually exist in LocalStack
+        working-directory: terraform
+        run: |
+          set -euo pipefail
+          bucket="$(terraform output -raw artifacts_bucket)"
+          vpc_id="$(terraform output -raw vpc_id)"
+          echo "==> Checking S3 bucket ${bucket} exists"
+          aws --endpoint-url http://localhost:4566 --region us-east-1 \
+            s3api head-bucket --bucket "${bucket}"
+          echo "==> Checking VPC ${vpc_id} exists"
+          aws --endpoint-url http://localhost:4566 --region us-east-1 \
+            ec2 describe-vpcs --vpc-ids "${vpc_id}"
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+
+      # Always tears the stack back down, even on failure above, so a
+      # failed run doesn't leave half-applied state for the next one --
+      # the LocalStack container itself is thrown away at the end of the
+      # job either way, but destroying is what actually exercises that
+      # this config is safe to tear down cleanly, same as it would need to
+      # be against real AWS.
+      - name: Terraform destroy
+        if: always()
+        working-directory: terraform
+        run: terraform destroy -input=false -auto-approve

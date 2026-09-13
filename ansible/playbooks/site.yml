@@ -1,0 +1,15 @@
+---
+# Configures the whole fleet from a stock Ubuntu container (see
+# docker/corporate-server/Dockerfile) into a baselined, SSH-hardened box
+# serving its own status page -- in that order, since ssh_hardening
+# deliberately narrows access and baseline's own tasks should run under
+# the wider "before" access first.
+- name: Configure the corporate fleet
+  hosts: fleet
+  become: true
+  gather_facts: true
+
+  roles:
+    - baseline
+    - ssh_hardening
+    - webserver

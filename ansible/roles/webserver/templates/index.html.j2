@@ -1,0 +1,13 @@
+<!-- {{ ansible_managed }} -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ inventory_hostname }} -- iac-terraform-ansible demo</title>
+</head>
+<body>
+  <h1>{{ inventory_hostname }}</h1>
+  <p>Configured by Ansible. Environment: {{ webserver_environment }}.</p>
+  <p>Last configured: {{ ansible_date_time.iso8601 }}</p>
+</body>
+</html>

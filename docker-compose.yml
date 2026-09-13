@@ -1,0 +1,46 @@
+# Two things live here, both standing in for pieces of the corporate
+# environment the Terraform side (terraform/) describes:
+#
+#  - localstack: a mocked AWS API surface so terraform/ can plan/apply/
+#    destroy for real, with no AWS bill and no real credentials.
+#  - corporate-server-1/2: a two-node "fleet" of plain Ubuntu containers
+#    with nothing configured but SSH access -- what would be freshly
+#    provisioned EC2 instances in a real deployment. ansible/ configures
+#    them for real over real SSH, the same way it would a real fleet.
+#
+# Run `bash scripts/generate-ssh-key.sh` once before `docker compose up`
+# -- it creates the keypair these containers and the Ansible inventory
+# both expect, and writes BOOTSTRAP_SSH_PUBKEY into .env for compose to
+# pick up automatically.
+
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,iam,sts,ec2
+      - DEBUG=0
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  corporate-server-1:
+    build: ./docker/corporate-server
+    hostname: corporate-server-1
+    environment:
+      - BOOTSTRAP_SSH_PUBKEY=${BOOTSTRAP_SSH_PUBKEY:?run scripts/generate-ssh-key.sh first}
+    ports:
+      - "2201:22"
+      - "8081:80"
+
+  corporate-server-2:
+    build: ./docker/corporate-server
+    hostname: corporate-server-2
+    environment:
+      - BOOTSTRAP_SSH_PUBKEY=${BOOTSTRAP_SSH_PUBKEY:?run scripts/generate-ssh-key.sh first}
+    ports:
+      - "2202:22"
+      - "8082:80"

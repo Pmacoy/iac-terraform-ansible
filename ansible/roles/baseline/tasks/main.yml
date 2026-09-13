@@ -1,0 +1,31 @@
+---
+- name: Update apt package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install baseline packages
+  ansible.builtin.apt:
+    name: "{{ baseline_packages }}"
+    state: present
+
+- name: Set a message-of-the-day banner
+  ansible.builtin.copy:
+    dest: /etc/motd
+    content: "{{ baseline_motd }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure the deploy group exists
+  ansible.builtin.group:
+    name: "{{ baseline_deploy_group }}"
+    state: present
+
+- name: Ensure a deploy user exists for application deployments
+  ansible.builtin.user:
+    name: "{{ baseline_deploy_user }}"
+    group: "{{ baseline_deploy_group }}"
+    shell: /bin/bash
+    create_home: true
+    state: present

@@ -1,0 +1,11 @@
+---
+- name: Reload sshd
+  # A *reload* (SIGHUP), not a restart. This container's sshd is PID 1
+  # (see docker/corporate-server/entrypoint.sh) -- a full restart would
+  # stop and respawn it, and nothing in this container supervises PID 1,
+  # so that would kill the container out from under Ansible mid-play.
+  # SIGHUP makes sshd re-exec itself in place (same PID) and pick up the
+  # new config without dropping the connection Ansible is using.
+  ansible.builtin.service:
+    name: ssh
+    state: reloaded

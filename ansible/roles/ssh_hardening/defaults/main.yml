@@ -1,0 +1,5 @@
+---
+# Only bootstrap has a key provisioned (see entrypoint.sh) -- deploy exists
+# for application deployments but isn't an SSH-login identity in this demo.
+ssh_hardening_allowed_users:
+  - bootstrap

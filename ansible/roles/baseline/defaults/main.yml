@@ -1,0 +1,13 @@
+---
+baseline_packages:
+  - curl
+  - ca-certificates
+  - vim-tiny
+  - unattended-upgrades
+
+baseline_motd: |
+  *** Managed by Ansible -- see ansible/roles/baseline in iac-terraform-ansible ***
+  Unauthorized access is prohibited and logged.
+
+baseline_deploy_user: deploy
+baseline_deploy_group: deploy

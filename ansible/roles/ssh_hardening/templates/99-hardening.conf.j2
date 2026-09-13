@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+# Materially tightens the distro-default sshd_config this fleet started
+# with (see docker/corporate-server/Dockerfile): key-only auth, no root
+# login, tighter auth limits, and an explicit allow-list.
+
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+KbdInteractiveAuthentication no
+X11Forwarding no
+MaxAuthTries 3
+LoginGraceTime 20
+ClientAliveInterval 300
+ClientAliveCountMax 2
+AllowUsers {{ ssh_hardening_allowed_users | join(' ') }}

@@ -1,0 +1,7 @@
+---
+- name: Reload nginx
+  # nginx isn't PID 1 in this container (sshd is -- see
+  # docker/corporate-server/entrypoint.sh), so a normal reload is safe here.
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
