@@ -30,6 +30,11 @@ resource "aws_s3_bucket_versioning" "access_logs" {
   }
 }
 
+# tfsec wants a customer-managed KMS key here; this repo's LocalStack
+# container doesn't enable the KMS service (same reasoning as
+# checkov:skip=CKV_AWS_145 above), so default AES256 is what's actually
+# achievable in this demo.
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs" {
   bucket = aws_s3_bucket.access_logs.id
   rule {
@@ -57,6 +62,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs" {
   rule {
     id     = "expire-old-access-logs"
     status = "Enabled"
+
+    # Required by the AWS provider (rule needs exactly one of filter/prefix)
+    # -- an empty filter applies the rule to every object in the bucket.
+    # Without this, LocalStack hangs waiting for the lifecycle
+    # configuration to settle and the apply times out after 3 minutes.
+    filter {}
 
     expiration {
       days = 90

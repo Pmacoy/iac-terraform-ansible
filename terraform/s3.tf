@@ -27,6 +27,11 @@ resource "aws_s3_bucket_versioning" "artifacts" {
   }
 }
 
+# tfsec wants a customer-managed KMS key here; this repo's LocalStack
+# container doesn't enable the KMS service (same reasoning as
+# checkov:skip=CKV_AWS_145 above), so default AES256 is what's actually
+# achievable in this demo.
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "artifacts" {
   bucket = aws_s3_bucket.artifacts.id
   rule {
@@ -62,6 +67,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
   rule {
     id     = "expire-noncurrent-versions"
     status = "Enabled"
+
+    # Exigido pelo provider da AWS (a rule precisa de exatamente um entre
+    # filter/prefix) -- um filter vazio aplica a regra a todos os objetos
+    # do bucket. Sem isso, o LocalStack trava esperando a configuração de
+    # lifecycle "assentar" e o apply estoura o timeout de 3 minutos.
+    filter {}
 
     noncurrent_version_expiration {
       noncurrent_days = 30

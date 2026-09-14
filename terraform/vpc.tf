@@ -20,6 +20,10 @@ resource "aws_internet_gateway" "main" {
   tags   = merge(local.common_tags, { Name = "${local.name}-igw" })
 }
 
+# tfsec flags the same thing Checkov's CKV_AWS_130 does below -- intentional,
+# same reasoning: this is the public subnet (Tier = "public" below) and
+# auto-assigning a public IP is the point of it.
+#tfsec:ignore:aws-ec2-no-public-ip-subnet
 resource "aws_subnet" "public" {
   # checkov:skip=CKV_AWS_130: intentional -- this is the public subnet
   # (Tier = "public" below); auto-assigning a public IP is the point of

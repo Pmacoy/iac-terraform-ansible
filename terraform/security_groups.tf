@@ -21,6 +21,7 @@ resource "aws_security_group" "fleet" {
   # fleet's own nginx (ansible/roles/webserver), which is meant to be
   # reachable from the public internet. Scoping this down would defeat
   # the point of having a public web tier.
+  #tfsec:ignore:aws-vpc-no-public-ingress-sgr
   ingress {
     description = "HTTP from anywhere (this is a public web tier)"
     from_port   = 80
@@ -33,6 +34,7 @@ resource "aws_security_group" "fleet" {
   # simplification (see the rule's own description below); a real
   # deployment would scope this to the specific destinations the fleet
   # actually needs (package mirrors, internal services, etc).
+  #tfsec:ignore:aws-vpc-no-public-egress-sgr
   egress {
     description = "Unrestricted egress -- fine for a demo, would be scoped down for real workloads"
     from_port   = 0
