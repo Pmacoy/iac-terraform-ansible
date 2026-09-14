@@ -1,3 +1,9 @@
+# checkov:skip=CKV2_AWS_5: not attached to anything in *this* Terraform
+# config on purpose -- this repo's Terraform scope stops at the landing
+# zone (see README's "Why LocalStack" section); the fleet it's meant for
+# is the Docker containers Ansible configures, not an aws_instance this
+# config provisions. In a real deployment the fleet's EC2 instances (or
+# their launch template) would reference this security group's id.
 resource "aws_security_group" "fleet" {
   name        = "${local.name}-fleet"
   description = "Corporate fleet: SSH from the bastion CIDR only, HTTP from anywhere"

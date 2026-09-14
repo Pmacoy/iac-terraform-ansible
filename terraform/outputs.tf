@@ -32,3 +32,8 @@ output "flow_logs_bucket" {
   description = "Name of the S3 bucket VPC flow logs are delivered to"
   value       = aws_s3_bucket.flow_logs.bucket
 }
+
+output "access_logs_bucket" {
+  description = "Name of the S3 bucket server access logs are delivered to"
+  value       = aws_s3_bucket.access_logs.bucket
+}

@@ -44,3 +44,31 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# Server access logging -- who read/wrote what, and when -- delivered to
+# the dedicated log bucket in access_logs.tf.
+resource "aws_s3_bucket_logging" "artifacts" {
+  bucket        = aws_s3_bucket.artifacts.id
+  target_bucket = aws_s3_bucket.access_logs.id
+  target_prefix = "artifacts/"
+}
+
+# Nothing here keeps artifacts forever; old object versions are pure churn
+# once a newer one lands, and an abandoned multipart upload just wastes
+# storage.
+resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id
+
+  rule {
+    id     = "expire-noncurrent-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}

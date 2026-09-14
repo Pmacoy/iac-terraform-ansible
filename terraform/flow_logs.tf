@@ -41,6 +41,36 @@ resource "aws_s3_bucket_public_access_block" "flow_logs" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_logging" "flow_logs" {
+  bucket        = aws_s3_bucket.flow_logs.id
+  target_bucket = aws_s3_bucket.access_logs.id
+  target_prefix = "flow-logs/"
+}
+
+# Flow logs are high-volume and low-value past a certain age -- 90 days
+# covers a normal investigation window without keeping this bucket growing
+# forever.
+resource "aws_s3_bucket_lifecycle_configuration" "flow_logs" {
+  bucket = aws_s3_bucket.flow_logs.id
+
+  rule {
+    id     = "expire-old-flow-logs"
+    status = "Enabled"
+
+    expiration {
+      days = 90
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 # VPC Flow Logs are delivered by the delivery.logs.amazonaws.com service
 # principal, not by any IAM role in this account -- this bucket policy is
 # what actually authorizes the delivery, the same way it would against

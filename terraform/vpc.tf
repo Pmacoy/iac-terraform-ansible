@@ -20,6 +20,9 @@ resource "aws_internet_gateway" "main" {
   tags   = merge(local.common_tags, { Name = "${local.name}-igw" })
 }
 
+# checkov:skip=CKV_AWS_130: intentional -- this is the public subnet
+# (Tier = "public" below); auto-assigning a public IP is the point of it.
+# The private subnet right below has no such setting.
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
