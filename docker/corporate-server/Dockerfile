@@ -6,7 +6,7 @@
 # creating the app user, hardening sshd, installing nginx -- happens
 # against a container built from exactly this image, not a pre-baked one,
 # so the demo proves configuration management, not a lucky base image.
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 # Not pinning apt package versions here on purpose: this base image is
 # itself repinned by Dependabot (docker ecosystem, docker/corporate-server)
