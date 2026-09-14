@@ -26,7 +26,7 @@ terraform {
       # https://github.com/hashicorp/terraform-provider-aws/issues/49019 and
       # https://github.com/localstack/localstack/issues/12246. 5.69.0 is the
       # last release before that check was introduced.
-      version = ">= 5.0, <= 5.69.0"
+      version = ">= 5.0, <= 6.63.0"
     }
   }
 }
