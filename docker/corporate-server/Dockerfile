@@ -13,15 +13,27 @@ FROM ubuntu:24.04
 # whenever Ubuntu 24.04 moves, and hard-coding e.g. openssh-server's exact
 # version would silently start failing every time Ubuntu ships a security
 # update for it -- the opposite of what a security-conscious pin should do.
-# hadolint ignore=DL3008
+#
+# Also deliberately NOT deleting /var/lib/apt/lists/* afterward, even
+# though that's the standard image-slimming move hadolint's DL3009 wants.
+# These containers are configured live by Ansible after boot (roles/
+# baseline and roles/webserver install more packages later), and Ansible's
+# apt module relies on cache_valid_time to skip a redundant apt-get update
+# and stay idempotent -- but cache_valid_time only checks the cache's
+# *age*, not whether an index is actually present. Wipe the lists here and
+# a fresh container has a cache that *looks* fresh (recent mtime) but is
+# empty, so cache_valid_time tells Ansible to trust it, and the very next
+# apt-get install fails with "No package matching '<pkg>' is available".
+# Keeping the lists costs a bit of image size in exchange for both this
+# RUN and Ansible's apt module (later) actually working.
+# hadolint ignore=DL3008,DL3009
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
       openssh-server \
       sudo \
       python3 \
       python3-apt \
-      iproute2 \
-    && rm -rf /var/lib/apt/lists/*
+      iproute2
 
 # Ansible's default connection needs a Python interpreter on the target --
 # python3 above is it; no extra ansible-specific packaging required.

@@ -1,15 +1,23 @@
 ---
 - name: Update apt package cache
-  # No cache_valid_time here on purpose: Ansible's apt module judges
-  # freshness from /var/cache/apt/pkgcache.bin's mtime, which the image
-  # build leaves looking recent -- but the same Dockerfile RUN also does
-  # `rm -rf /var/lib/apt/lists/*` to keep the image small, so there's no
-  # actual package index left on a freshly-built container. A
-  # cache_valid_time window would make Ansible trust that stale mtime and
-  # skip apt-get update, and every apt-get install below would then fail
-  # with "No package matching '<pkg>' is available".
+  # cache_valid_time matters for two different reasons here, not just
+  # speed:
+  #  - Without it, Ansible's apt module runs a real `apt-get update` on
+  #    every single play, and Ubuntu's index (unlike Debian's) doesn't
+  #    report changed=false reliably when nothing actually changed --
+  #    verify-idempotence.sh caught this for real: the second run of the
+  #    playbook reported changed=1 on this exact task. See
+  #    https://github.com/ansible/ansible/issues/73307 and
+  #    https://github.com/ansible/ansible/issues/76819.
+  #  - It only works because docker/corporate-server/Dockerfile no longer
+  #    deletes /var/lib/apt/lists/* after its own apt-get install -- an
+  #    earlier version of this repo did, which left cache_valid_time
+  #    trusting a cache that looked fresh but was actually empty, and
+  #    every apt-get install below failed with "No package matching
+  #    '<pkg>' is available". See the comment on that Dockerfile RUN.
   ansible.builtin.apt:
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Install baseline packages
   ansible.builtin.apt:

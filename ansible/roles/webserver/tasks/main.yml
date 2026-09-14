@@ -1,10 +1,13 @@
 ---
 - name: Install nginx
-  # See baseline/tasks/main.yml for why there's no cache_valid_time here.
+  # See baseline/tasks/main.yml for why cache_valid_time matters here too
+  # (idempotence on Ubuntu, and only safe because the Dockerfile keeps
+  # /var/lib/apt/lists/* around).
   ansible.builtin.apt:
     name: nginx
     state: present
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Deploy the demo index page
   ansible.builtin.template:
