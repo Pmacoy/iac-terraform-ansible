@@ -11,8 +11,22 @@ terraform {
 
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+      source = "hashicorp/aws"
+      # Pinned <= 5.69.0 on purpose, not just "~> 5.0": newer 5.x releases
+      # added a post-apply convergence check on
+      # aws_s3_bucket_lifecycle_configuration that compares the
+      # transition_default_minimum_object_size the provider expects
+      # ("all_storage_classes_128K") against what the endpoint reports back.
+      # Real AWS sends that via the x-amz-transition-default-minimum-object-
+      # size response header; LocalStack (and every other S3-compatible
+      # endpoint) doesn't send it, so the provider reads back an empty value
+      # and the comparison never matches -- terraform apply just hangs for
+      # 3 minutes on every lifecycle-configuration resource and then times
+      # out, even though the rules were written correctly. See
+      # https://github.com/hashicorp/terraform-provider-aws/issues/49019 and
+      # https://github.com/localstack/localstack/issues/12246. 5.69.0 is the
+      # last release before that check was introduced.
+      version = ">= 5.0, <= 5.69.0"
     }
   }
 }
