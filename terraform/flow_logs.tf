@@ -4,8 +4,23 @@
 # investigating. Logs land in their own bucket, not the artifacts bucket,
 # so app data and network logs stay separate.
 resource "aws_s3_bucket" "flow_logs" {
+  # checkov:skip=CKV2_AWS_62: no event-driven pipeline exists in this demo
+  # to notify -- same reasoning as the artifacts bucket (see s3.tf).
+  # checkov:skip=CKV_AWS_144: cross-region replication is a DR concern for
+  # production log data; this bucket only holds this demo VPC's throwaway
+  # flow logs, and every CI run empties it via `terraform destroy` anyway.
+  # checkov:skip=CKV_AWS_145: default AES256 (enabled below) is sufficient
+  # here for the same reason as the artifacts bucket -- this repo's
+  # LocalStack container doesn't enable the KMS service.
   bucket = "${local.name}-vpc-flow-logs"
   tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_versioning" "flow_logs" {
+  bucket = aws_s3_bucket.flow_logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "flow_logs" {

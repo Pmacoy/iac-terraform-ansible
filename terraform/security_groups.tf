@@ -23,6 +23,10 @@ resource "aws_security_group" "fleet" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # checkov:skip=CKV_AWS_382: unrestricted egress is a deliberate demo
+  # simplification (see the rule's own description below); a real
+  # deployment would scope this to the specific destinations the fleet
+  # actually needs (package mirrors, internal services, etc).
   egress {
     description = "Unrestricted egress -- fine for a demo, would be scoped down for real workloads"
     from_port   = 0
