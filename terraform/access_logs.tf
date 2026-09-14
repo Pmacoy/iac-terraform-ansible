@@ -3,9 +3,14 @@
 # target bucket that the artifacts and flow-logs buckets' own `logging`
 # blocks point at (see the aws_s3_bucket_logging resources in s3.tf and
 # flow_logs.tf). This bucket intentionally does NOT log to itself -- that
-# would just recurse forever -- so its own copy of that same tfsec/Checkov
-# finding is skipped below, the same way the log-delivery-service pattern
-# is skipped on the flow-logs bucket.
+# would just recurse forever -- so its own copy of that same finding is
+# suppressed below, the same way the log-delivery-service pattern is
+# skipped on the flow-logs bucket.
+#
+# tfsec's ignore comment has to sit directly above the resource line
+# itself (unlike Checkov's, which goes inside the block) -- see the
+# checkov:skip comments inside the block below for that one.
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "access_logs" {
   # checkov:skip=CKV2_AWS_62: no event-driven pipeline exists in this demo
   # to notify -- same reasoning as the artifacts bucket (see s3.tf).
@@ -14,8 +19,6 @@ resource "aws_s3_bucket" "access_logs" {
   # access logs, and every CI run empties it via `terraform destroy`.
   # checkov:skip=CKV_AWS_145: default AES256 (enabled below) is sufficient
   # here; this repo's LocalStack container doesn't enable the KMS service.
-  #tfsec:ignore:aws-s3-enable-bucket-logging -- this *is* the log target;
-  # logging it to itself would recurse.
   bucket = "${local.name}-access-logs"
   tags   = local.common_tags
 }

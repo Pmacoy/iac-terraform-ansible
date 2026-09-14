@@ -20,10 +20,10 @@ resource "aws_internet_gateway" "main" {
   tags   = merge(local.common_tags, { Name = "${local.name}-igw" })
 }
 
-# checkov:skip=CKV_AWS_130: intentional -- this is the public subnet
-# (Tier = "public" below); auto-assigning a public IP is the point of it.
-# The private subnet right below has no such setting.
 resource "aws_subnet" "public" {
+  # checkov:skip=CKV_AWS_130: intentional -- this is the public subnet
+  # (Tier = "public" below); auto-assigning a public IP is the point of
+  # it. The private subnet right below has no such setting.
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
@@ -50,4 +50,16 @@ resource "aws_route_table" "public" {
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
+}
+
+# AWS creates this default security group with every VPC, and anything
+# that doesn't specify a security group of its own falls back to it. Left
+# alone it ships with an "allow all from itself" rule, which is exactly
+# what Checkov (CKV2_AWS_12) flags. Declaring it here doesn't create a new
+# SG -- it takes over management of the one AWS already made and, with no
+# ingress/egress blocks, strips every rule from it. Anything that actually
+# needs network access uses the purpose-built SG in security_groups.tf.
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+  tags   = merge(local.common_tags, { Name = "${local.name}-default-sg-locked-down" })
 }
