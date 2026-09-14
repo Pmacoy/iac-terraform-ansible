@@ -20,3 +20,6 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
+          ignore:
+      - dependency-name: "hashicorp/aws"
+        versions: [">5.69.0"]
